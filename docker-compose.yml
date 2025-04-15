@@ -14,5 +14,18 @@ services:
       - mongo_data:/data/db
       - ./mongo-init:/docker-entrypoint-initdb.d:ro
 
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter_spark
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    depends_on:
+      - mongo
+
 volumes:
   mongo_data:

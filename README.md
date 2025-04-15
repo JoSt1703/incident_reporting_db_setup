@@ -1,4 +1,4 @@
-# Cybersecurity Incident Reporting – MongoDB
+# Cybersecurity Incident Reporting – MongoDB & PySpark
 
 This project is part of a Master's thesis at ETH Zurich. The aim of the thesis is to explore the potential and requirements for **positive incidence reporting** in cybersecurity.
 
@@ -6,7 +6,7 @@ While incident reporting is a well-established practice in many organizations, i
 
 However, there is also value in capturing **positive cybersecurity incidents** — such as successful defense operations, resilience during attacks, or well-implemented best practices. These "positive" stories can offer insights into what contributes to secure and stable operations.
 
-This repository contains a **Docker-based prototype** for a MongoDB database to store and explore both positive and negative incident reports.
+This repository contains a **Docker-based prototype** for a MongoDB database and a PySpark-powered Jupyter Notebook to explore both positive and negative incident reports.
 
 ---
 
@@ -15,16 +15,11 @@ This repository contains a **Docker-based prototype** for a MongoDB database to 
 ### 1. Prerequisites
 
 - Docker  
-- Docker Compose
-
----
-
-### 2. Environment Configuration
-
-Create a `.env` file in the project root:
+- Docker Compose  
+- `.env` file in project root:
 
 ```
-MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_USERNAME=admin  
 MONGO_INITDB_ROOT_PASSWORD=adminPW
 ```
 
@@ -32,113 +27,79 @@ MONGO_INITDB_ROOT_PASSWORD=adminPW
 
 ---
 
-### 3. Start the Service
+### 2. Start the Services
 
-```
+```bash
 docker compose up -d
+```
+
+This will start both:
+
+- MongoDB on `localhost:27017`
+- Jupyter Lab with PySpark on `localhost:8888`
+
+Get the Jupyter token using:
+
+```bash
+docker logs jupyter_spark
 ```
 
 ---
 
-### 4. Stop the Service
+### 3. Stop the Services
 
-```
+```bash
 docker compose down
 ```
 
 ---
 
-## Access
+## Jupyter Notebook
 
-### MongoDB
+A prebuilt notebook is included at:
 
-- **Host:** `localhost`  
-- **Port:** `27017`  
-- **URI:**
+```
+notebooks/01_mongo_spark_demo.ipynb
+```
+
+This notebook:
+
+- Connects to MongoDB
+- Inserts test data into `positive_incidents` and `negative_incidents`
+- Reads both collections via PySpark
+- Performs basic analytics (e.g. counts by year)
+
+Start Jupyter Lab and open the notebook in your browser:
+
+```
+http://localhost:8888
+```
+
+---
+
+## MongoDB Access
+
+You can access MongoDB directly via:
+
+```bash
+docker exec -it mongodb mongosh -u admin -p adminPW
+```
+
+Inside the shell:
+
+```js
+use incidents
+show collections
+db.negative_incidents.find().pretty()
+```
+
+Or connect via MongoDB Compass using:
 
 ```
 mongodb://admin:adminPW@localhost:27017
 ```
 
-You can connect using:
-
-- [MongoDB Compass](https://www.mongodb.com/products/compass)
-- Command-line:
-
-```
-docker exec -it mongodb mongosh -u admin -p adminPW
-```
-
 ---
-
-## Data Persistence
-
-MongoDB data is stored in a Docker volume:
-
-```yaml
-volumes:
-  mongo_data:
-```
-
-This ensures data is retained across container restarts.
-
----
-
-## Automatic Collection Setup
-
-MongoDB will automatically create the following collections on startup:
-
-- `positive_incidents`
-- `negative_incidents`
-
-These collections are defined in an `init.js` script, which is mounted into the container using the `docker-entrypoint-initdb.d` mechanism. You can insert unstructured JSON documents into either collection without defining a schema.
-
-Make sure the script is located in a `mongo-init` folder and referenced in `docker-compose.yml`:
-
-```yaml
-volumes:
-  - ./mongo-init:/docker-entrypoint-initdb.d:ro
-```
-
----
-
-## VM Deployment (University Internal Server)
-
-To deploy on a VM within the university network:
-
-1. **Transfer the project folder to the VM**
-2. **Update the `.env` file** with strong credentials
-3. **Update port bindings** in `docker-compose.yml` to bind only to the VM’s internal IP:
-
-```yaml
-ports:
-  - "10.x.x.x:27017:27017"   # MongoDB
-```
-
-4. **Configure the firewall (UFW example)** to allow internal access only:
-
-```
-sudo ufw allow from 10.0.0.0/16 to any port 27017
-```
-
-5. **Start the service:**
-
-```
-docker compose up -d
-```
-
----
-
-## Security Recommendations
-
-- Do **not** expose MongoDB to the public internet.
-- If external access is needed:
-  - Use a reverse proxy (e.g., NGINX) with access controls.
-  - Or run behind a VPN (WireGuard, Tailscale, etc.).
-- Back up the MongoDB volume regularly if the data is valuable.
-
----
-
 ### Python Script for Bulk Import
 
 You can import JSON incident reports into MongoDB using a helper script:
@@ -157,12 +118,20 @@ Before running the script, install the required Python package:
 pip install pymongo python-dotenv
 ```
 
-Make sure your `.env` file is in the same directory
+Make sure your `.env` is in the same directory
+
+---
+
+## Security Tips
+
+- Do **not** expose MongoDB or Jupyter to the public internet.
+- Use a VPN, SSH tunnel, or proxy with basic auth if external access is needed.
+- Regularly back up your MongoDB volume if storing real data.
 
 ---
 
 ## License
 
-This project is for academic use as part of a Master's thesis and is not intended for production use without additional security hardening.
+This project is for academic purposes and is not hardened for production use.
 
 
