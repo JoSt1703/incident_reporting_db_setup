@@ -13,7 +13,7 @@ services:
       - ./mongo-init:/docker-entrypoint-initdb.d:ro
 
   jupyter:
-    image: jupyter/pyspark-notebook:latest
+    build: .  # Use custom Dockerfile in the current directory
     container_name: jupyter_spark
     restart: unless-stopped
     ports:
