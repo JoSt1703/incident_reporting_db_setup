@@ -93,20 +93,6 @@ MongoDB will automatically create the following collections on startup:
 
 These collections are defined in an `init.js` script, which is mounted into the container using the `docker-entrypoint-initdb.d` mechanism. You can insert unstructured JSON documents into either collection without defining a schema.
 
-Example script content:
-
-```js
-// mongo-init/init.js
-
-db = db.getSiblingDB('incidents');
-
-db.createCollection("positive_incidents");
-db.createCollection("negative_incidents");
-
-db.positive_incidents.createIndex({ _id: 1 }, { unique: true });
-db.negative_incidents.createIndex({ _id: 1 }, { unique: true });
-```
-
 Make sure the script is located in a `mongo-init` folder and referenced in `docker-compose.yml`:
 
 ```yaml
@@ -153,6 +139,30 @@ docker compose up -d
 
 ---
 
+### Python Script for Bulk Import
+
+You can import JSON incident reports into MongoDB using a helper script:
+
+```
+python3 insert_incidents.py [positive|negative]
+```
+
+This script reads all `.json` files from the `./data/` folder and inserts them into either the `positive_incidents` or `negative_incidents` collection based on the argument you provide. It uses your `.env` file to retrieve the MongoDB credentials securely.
+
+#### Python Requirements
+
+Before running the script, install the required Python package:
+
+```
+pip install pymongo python-dotenv
+```
+
+Make sure your `.env` file is in the same directory
+
+---
+
 ## License
 
 This project is for academic use as part of a Master's thesis and is not intended for production use without additional security hardening.
+
+
